@@ -8,7 +8,25 @@ import { join } from 'path';
 
 @Module({
   imports: [
+    // GraphQL setup
+    GraphQLModule.forRoot<ApolloDriverConfig>({
+      driver: ApolloDriver,
+      autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
+      sortSchema: true,
+      playground: true,
+      context: ({ req }) => ({ req }),
+    }),
     
+    // Schedule for cron jobs
+    ScheduleModule.forRoot(),
+    
+    // Bull for background jobs
+    BullModule.forRoot({
+      redis: {
+        host: process.env.REDIS_HOST || 'localhost',
+        port: parseInt(process.env.REDIS_PORT || '6379'),
+      },
+    }),
     
   ],
 })
