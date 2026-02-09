@@ -9,7 +9,7 @@ async function bootstrap() {
     logger: ['log', 'error', 'warn', 'debug', 'verbose'],
   });
 
-  // Enable validation
+  //Enable validation
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -19,7 +19,7 @@ async function bootstrap() {
   );
 
   // Enable CORS 
-  app.enableCors();
+  app.enableCors();     
 
   const port = process.env.PORT || 5050;
   await app.listen(port);

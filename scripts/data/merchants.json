@@ -1,0 +1,7 @@
+[
+  { "businessName": "Acme Coffee", "category": "Food & Beverage", "description": "Coffee and pastries" },
+  { "businessName": "Tech Gadgets Ltd", "category": "Electronics", "description": "Phones and accessories" },
+  { "businessName": "Green Grocers", "category": "Retail", "description": "Fresh produce and groceries" },
+  { "businessName": "FitLife Gym", "category": "Health & Fitness", "description": "Gym and wellness" },
+  { "businessName": "Book Haven", "category": "Retail", "description": "Books and stationery" }
+]

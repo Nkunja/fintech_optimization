@@ -1,0 +1,7 @@
+[
+  { "userId": "user-dev-001", "customerType": "Regular" },
+  { "userId": "user-dev-002", "customerType": "Vip" },
+  { "userId": "user-dev-003", "customerType": "Occasional" },
+  { "userId": "user-dev-004", "customerType": "New" },
+  { "userId": "user-dev-005", "customerType": "Infrequent" }
+]

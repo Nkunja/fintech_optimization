@@ -1,0 +1,9 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type Query {
+  health: String!
+  loyaltyPrograms(category: String, search: String): String!
+  offers(category: String, limit: Float = 50, offset: Float = 0, percentage: String, search: String): String!
+}

@@ -18,9 +18,9 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     await this.$disconnect();
   }
 
-  /**
-   * Clean up expired cache entries
-   */
+  
+  // Clean up expired cache entries
+   
   async cleanupExpiredCache(): Promise<number> {
     const result = await this.offerListCache.deleteMany({
       where: {
@@ -32,10 +32,9 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     return result.count;
   }
 
-  /**
-   * TODO: 
-   * Clean up old computation logs (Retain 30 days)
-   */
+  
+  // TODO: Clean up old computation logs (Retain 30 days)
+  
   async cleanupOldLogs(): Promise<number> {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
