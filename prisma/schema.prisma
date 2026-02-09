@@ -1,0 +1,416 @@
+// This is your Prisma schema file
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["fullTextSearch", "fullTextIndex"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// CORE MODELS (Existing schema with some adjustments for optimization)
+// ============================================================================
+
+model Outlet {
+  id                      String                    @id @default(cuid())
+  name                    String
+  description             String?
+  isActive                Boolean                   @default(true)
+  createdAt               DateTime                  @default(now())
+  updatedAt               DateTime                  @updatedAt
+  merchantId              String
+  reviewId                String?                   @unique
+  
+  // Relations
+  Merchant                Merchant                  @relation(fields: [merchantId], references: [id])
+  Review                  Review?                   @relation(fields: [reviewId], references: [id])
+  PaybillOrTills          PaybillOrTill[]
+  CashbackConfigurations  CashbackConfiguration[]
+  ExclusiveOffers         ExclusiveOffer[]
+  
+  // NEW: Materialized eligibility records
+  UserOfferEligibility    UserOfferEligibility[]
+  
+  @@index([merchantId])
+  @@index([isActive])
+  @@index([reviewId])
+  @@map("outlets")
+}
+
+model Merchant {
+  id                      String                    @id @default(cuid())
+  businessName            String
+  description             String?
+  status                  MerchantStatusEnum        @default(Pending)
+  category                String
+  createdAt               DateTime                  @default(now())
+  updatedAt               DateTime                  @updatedAt
+  
+  // Relations
+  Outlets                 Outlet[]
+  CashbackConfigurations  CashbackConfiguration[]
+  ExclusiveOffers         ExclusiveOffer[]
+  LoyaltyProgram          LoyaltyProgram?
+  CustomerTypes           CustomerType[]
+  
+  @@index([status])
+  @@index([category])
+  @@map("merchants")
+}
+
+model CashbackConfiguration {
+  id                          String                        @id @default(cuid())
+  name                        String
+  description                 String?
+  startDate                   DateTime?
+  endDate                     DateTime?
+  isActive                    Boolean                       @default(true)
+  deletedAt                   DateTime?
+  eligibleCustomerTypes       String[]                      @default([])
+  merchantId                  String
+  reviewId                    String?                       @unique
+  netCashbackBudget           Decimal                       @default(0) @db.Decimal(10, 2)
+  usedCashbackBudget          Decimal                       @default(0) @db.Decimal(10, 2)
+  createdAt                   DateTime                      @default(now())
+  updatedAt                   DateTime                      @updatedAt
+  
+  // Relations
+  Merchant                    Merchant                      @relation(fields: [merchantId], references: [id])
+  Review                      Review?                       @relation(fields: [reviewId], references: [id])
+  Outlets                     Outlet[]
+  CashbackConfigurationTiers  CashbackConfigurationTier[]
+  
+  // NEW: Track when eligibility was last computed
+  eligibilityComputedAt       DateTime?
+  
+  @@index([merchantId])
+  @@index([isActive, deletedAt])
+  @@index([startDate, endDate])
+  @@index([eligibilityComputedAt])
+  @@map("cashback_configurations")
+}
+
+model CashbackConfigurationTier {
+  id                        String                  @id @default(cuid())
+  cashbackPercentage        Decimal                 @db.Decimal(5, 2)
+  minTransactionAmount      Decimal?                @db.Decimal(10, 2)
+  maxTransactionAmount      Decimal?                @db.Decimal(10, 2)
+  isActive                  Boolean                 @default(true)
+  deletedAt                 DateTime?
+  cashbackConfigurationId   String
+  reviewId                  String?                 @unique
+  createdAt                 DateTime                @default(now())
+  updatedAt                 DateTime                @updatedAt
+  
+  // Relations
+  CashbackConfiguration     CashbackConfiguration   @relation(fields: [cashbackConfigurationId], references: [id])
+  Review                    Review?                 @relation(fields: [reviewId], references: [id])
+  
+  @@index([cashbackConfigurationId])
+  @@index([isActive, deletedAt])
+  @@map("cashback_configuration_tiers")
+}
+
+model ExclusiveOffer {
+  id                    String                  @id @default(cuid())
+  name                  String
+  description           String
+  startDate             DateTime
+  endDate               DateTime
+  isActive              Boolean                 @default(true)
+  deletedAt             DateTime?
+  eligibleCustomerTypes String[]                @default([])
+  merchantId            String?
+  reviewId              String?                 @unique
+  netOfferBudget        Decimal                 @default(0) @db.Decimal(10, 2)
+  usedOfferBudget       Decimal                 @default(0) @db.Decimal(10, 2)
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  
+  // Relations
+  Merchant              Merchant?               @relation(fields: [merchantId], references: [id])
+  Review                Review?                 @relation(fields: [reviewId], references: [id])
+  Outlets               Outlet[]
+  
+  // NEW: Track when eligibility was last computed
+  eligibilityComputedAt DateTime?
+  
+  @@index([merchantId])
+  @@index([isActive, deletedAt])
+  @@index([startDate, endDate])
+  @@index([eligibilityComputedAt])
+  @@map("exclusive_offers")
+}
+
+model LoyaltyProgram {
+  id                      String                    @id @default(cuid())
+  name                    String
+  description             String?
+  isActive                Boolean                   @default(true)
+  merchantId              String?                   @unique
+  reviewId                String?                   @unique
+  pointsUsedInPeriod      Decimal                   @default(0) @db.Decimal(10, 2)
+  pointsIssuedLimit       Decimal?                  @db.Decimal(10, 2)
+  createdAt               DateTime                  @default(now())
+  updatedAt               DateTime                  @updatedAt
+  
+  // Relations
+  Merchant                Merchant?                 @relation(fields: [merchantId], references: [id])
+  Review                  Review?                   @relation(fields: [reviewId], references: [id])
+  LoyaltyTiers            LoyaltyTier[]
+  MerchantLoyaltyRewards  MerchantLoyaltyReward[]
+  
+  // NEW: Track when eligibility was last computed
+  eligibilityComputedAt   DateTime?
+  
+  @@index([merchantId])
+  @@index([isActive])
+  @@index([eligibilityComputedAt])
+  @@map("loyalty_programs")
+}
+
+model LoyaltyTier {
+  id                String          @id @default(cuid())
+  name              String
+  isActive          Boolean         @default(true)
+  deletedAt         DateTime?
+  minCustomerType   CustomerTypeEnum
+  loyaltyProgramId  String
+  reviewId          String?         @unique
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  
+  // Relations
+  LoyaltyProgram    LoyaltyProgram  @relation(fields: [loyaltyProgramId], references: [id])
+  Review            Review?         @relation(fields: [reviewId], references: [id])
+  
+  @@index([loyaltyProgramId])
+  @@index([isActive, deletedAt])
+  @@index([minCustomerType])
+  @@map("loyalty_tiers")
+}
+
+model MerchantLoyaltyReward {
+  id                String          @id @default(cuid())
+  name              String
+  pointsCost        Int
+  isActive          Boolean         @default(true)
+  loyaltyProgramId  String
+  reviewId          String?         @unique
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  
+  // Relations
+  LoyaltyProgram    LoyaltyProgram  @relation(fields: [loyaltyProgramId], references: [id])
+  Review            Review?         @relation(fields: [reviewId], references: [id])
+  
+  @@index([loyaltyProgramId])
+  @@index([isActive])
+  @@map("merchant_loyalty_rewards")
+}
+
+model CustomerType {
+  id          String            @id @default(cuid())
+  userId      String
+  merchantId  String
+  type        CustomerTypeEnum
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  
+  // Relations
+  Merchant    Merchant          @relation(fields: [merchantId], references: [id])
+  
+  @@unique([userId, merchantId])
+  @@index([userId])
+  @@index([merchantId])
+  @@index([type])
+  @@map("customer_types")
+}
+
+model PaybillOrTill {
+  id          String    @id @default(cuid())
+  outletId    String
+  isActive    Boolean   @default(true)
+  deletedAt   DateTime?
+  reviewId    String?   @unique
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relations
+  Outlet      Outlet    @relation(fields: [outletId], references: [id])
+  Review      Review?   @relation(fields: [reviewId], references: [id])
+  
+  @@index([outletId])
+  @@index([isActive, deletedAt])
+  @@map("paybill_or_tills")
+}
+
+model Review {
+  id                          String                      @id @default(cuid())
+  status                      ReviewStatusEnum            @default(Pending)
+  createdAt                   DateTime                    @default(now())
+  updatedAt                   DateTime                    @updatedAt
+  
+  // Relations
+  Outlet                      Outlet?
+  CashbackConfiguration       CashbackConfiguration?
+  CashbackConfigurationTier   CashbackConfigurationTier?
+  ExclusiveOffer              ExclusiveOffer?
+  LoyaltyProgram              LoyaltyProgram?
+  LoyaltyTier                 LoyaltyTier?
+  MerchantLoyaltyReward       MerchantLoyaltyReward?
+  PaybillOrTill               PaybillOrTill?
+  
+  @@index([status])
+  @@map("reviews")
+}
+
+// ============================================================================
+// NEW MODELS (Performance Optimization)
+// ============================================================================
+// This pre-computes all the complex eligibility logic
+model UserOfferEligibility {
+  id              String          @id @default(cuid())
+  userId          String
+  outletId        String
+  offerType       OfferTypeEnum
+  offerId         String
+  merchantId      String
+  
+  // Eligibility metadata
+  validFrom       DateTime        @default(now())
+  validUntil      DateTime?       // Null means indefinite, otherwise expiry date
+  isActive        Boolean         @default(true)
+  
+  // Denormalized offer data for fast filtering
+  merchantCategory String?
+  merchantName    String?
+  outletName      String?
+  
+  // For cashback offers
+  minPercentage   Decimal?        @db.Decimal(5, 2)
+  maxPercentage   Decimal?        @db.Decimal(5, 2)
+  
+  // Budget tracking snapshot
+  hasBudgetRemaining Boolean      @default(true)
+  
+  // Timestamps
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  computedAt      DateTime        @default(now())
+  
+  // Relations
+  Outlet          Outlet          @relation(fields: [outletId], references: [id], onDelete: Cascade)
+  
+  // Composite indexes for fast lookups
+  @@unique([userId, outletId, offerType, offerId])
+  @@index([userId, isActive, validUntil])
+  @@index([userId, offerType, isActive])
+  @@index([outletId, isActive])
+  @@index([merchantId, isActive])
+  @@index([merchantCategory, isActive])
+  @@index([validFrom, validUntil])
+  @@index([hasBudgetRemaining, isActive])
+  @@index([computedAt])
+  @@map("user_offer_eligibility")
+}
+
+// Track which offers need eligibility recomputation
+model EligibilityComputationQueue {
+  id              String                    @id @default(cuid())
+  entityType      EligibilityEntityTypeEnum
+  entityId        String
+  reason          String                    // Why recomputation is needed
+  priority        Int                       @default(0) // Higher = more urgent
+  status          QueueStatusEnum           @default(Pending)
+  attempts        Int                       @default(0)
+  lastAttemptAt   DateTime?
+  completedAt     DateTime?
+  error           String?
+  createdAt       DateTime                  @default(now())
+  updatedAt       DateTime                  @updatedAt
+  
+  @@index([status, priority, createdAt])
+  @@index([entityType, entityId])
+  @@map("eligibility_computation_queue")
+}
+
+// Cache for frequently accessed offer lists
+model OfferListCache {
+  id              String    @id @default(cuid())
+  cacheKey        String    @unique
+  data            Json
+  expiresAt       DateTime
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@index([expiresAt])
+  @@map("offer_list_cache")
+}
+
+// Audit log for debugging and monitoring
+model EligibilityComputationLog {
+  id                String    @id @default(cuid())
+  entityType        String
+  entityId          String
+  operation         String    // "COMPUTE", "INVALIDATE", "CLEANUP"
+  recordsAffected   Int
+  durationMs        Int
+  createdAt         DateTime  @default(now())
+  
+  @@index([createdAt])
+  @@index([entityType, entityId])
+  @@map("eligibility_computation_logs")
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum MerchantStatusEnum {
+  Active
+  Pending
+  Inactive
+  Suspended
+}
+
+enum ReviewStatusEnum {
+  Approved
+  Pending
+  Rejected
+}
+
+enum CustomerTypeEnum {
+  NonCustomer
+  New
+  Infrequent
+  Occasional
+  Regular
+  Vip
+}
+
+enum OfferTypeEnum {
+  CASHBACK
+  EXCLUSIVE
+  LOYALTY
+}
+
+enum EligibilityEntityTypeEnum {
+  CASHBACK_CONFIG
+  EXCLUSIVE_OFFER
+  LOYALTY_PROGRAM
+  CUSTOMER_TYPE
+  MERCHANT
+  OUTLET
+}
+
+enum QueueStatusEnum {
+  Pending
+  Processing
+  Completed
+  Failed
+}
