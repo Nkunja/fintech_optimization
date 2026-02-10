@@ -1,12 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import type { Queue } from 'bull';
-import { PrismaService } from '../modules/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import {
   EligibilityEntityTypeEnum,
   QueueStatusEnum,
 } from '@prisma/client';
-import { QUEUE_PRIORITY, BATCH_LIMITS } from '../common/constants';
+import { QUEUE_PRIORITY, BATCH_LIMITS } from '../../common/constants';
 
 export interface EligibilityJob {
   entityType: EligibilityEntityTypeEnum;

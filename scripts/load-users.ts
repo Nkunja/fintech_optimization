@@ -92,11 +92,11 @@ async function main() {
     } else {
       console.log('No --file or --count provided. Creating 5 default test users.');
       entries = [
-        { userId: 'user-dev-001', customerType: 'Regular' },
-        { userId: 'user-dev-002', customerType: 'Vip' },
-        { userId: 'user-dev-003', customerType: 'Occasional' },
-        { userId: 'user-dev-004', customerType: 'New' },
-        { userId: 'user-dev-005', customerType: 'Infrequent' },
+        { userId: 'user-dev-006', customerType: 'Regular' },
+        { userId: 'user-dev-007', customerType: 'Vip' },
+        { userId: 'user-dev-008', customerType: 'Occasional' },
+        { userId: 'user-dev-009', customerType: 'New' },
+        { userId: 'user-dev-011', customerType: 'Infrequent' },
       ];
     }
   }

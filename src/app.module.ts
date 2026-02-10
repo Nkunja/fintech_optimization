@@ -7,7 +7,7 @@ import { join } from 'path';
 import { PrismaModule } from './modules/prisma/prisma.module';
 import { HealthResolver } from './modules/health/health.resolver';
 import { OffersModule } from './modules/offers/offers.module';
-import { EligibilityModule } from './eligibility/eligibility.module';
+import { EligibilityModule } from './modules/eligibility/eligibility.module';
 
 
 @Module({

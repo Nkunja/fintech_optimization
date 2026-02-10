@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { PrismaService } from '../modules/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { EligibilityQueueService } from './eligibility-queue.service';
 import { EligibilityComputationService } from './eligibility-computation.service';
 import {
@@ -8,7 +8,7 @@ import {
   OfferTypeEnum,
   QueueStatusEnum,
 } from '@prisma/client';
-import { QUEUE_PRIORITY, FEATURE_FLAGS } from '../common/constants';
+import { QUEUE_PRIORITY, FEATURE_FLAGS } from '../../common/constants';
 
 @Injectable()
 export class EligibilityScheduler {

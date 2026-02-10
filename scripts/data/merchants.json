@@ -1,7 +1,7 @@
 [
-  { "businessName": "Acme Coffee", "category": "Food & Beverage", "description": "Coffee and pastries" },
-  { "businessName": "Tech Gadgets Ltd", "category": "Electronics", "description": "Phones and accessories" },
-  { "businessName": "Green Grocers", "category": "Retail", "description": "Fresh produce and groceries" },
-  { "businessName": "FitLife Gym", "category": "Health & Fitness", "description": "Gym and wellness" },
-  { "businessName": "Book Haven", "category": "Retail", "description": "Books and stationery" }
+  { "businessName": "Acme Coffee 1", "category": "Food & Beverage", "description": "Coffee and pastries" },
+  { "businessName": "Tech Gadgets Ltd 1", "category": "Electronics", "description": "Phones and accessories" },
+  { "businessName": "Green Grocers 1", "category": "Retail", "description": "Fresh produce and groceries" },
+  { "businessName": "FitLife Gym 1", "category": "Health & Fitness", "description": "Gym and wellness" },
+  { "businessName": "Book Haven 1", "category": "Retail", "description": "Books and stationery" }
 ]

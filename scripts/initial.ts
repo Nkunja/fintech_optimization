@@ -11,16 +11,16 @@
  */
 
 import { PrismaClient } from '@prisma/client';
-// import { EligibilityComputationService } from '../src/eligibility/eligibility-computation.service';
-// import { EligibilityQueueService } from '../src/eligibility/eligibility-queue.service';
-// import { QUEUE_PRIORITY } from '../src/common/constants';
+import { EligibilityComputationService } from '../src/modules/eligibility/eligibility-computation.service';
+import { EligibilityQueueService } from '../src/modules/eligibility/eligibility-queue.service';
+import { QUEUE_PRIORITY } from '../src/common/constants';
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log('Starting initial eligibility migration...\n');
 
-//   const computationService = new EligibilityComputationService(prisma);
+  const computationService = new EligibilityComputationService(prisma as any);
   
   // Mock queue service for direct computation
   const stats = {
@@ -42,8 +42,8 @@ async function main() {
   for (const [index, config] of cashbackConfigs.entries()) {
     try {
       console.log(`   [${index + 1}/${cashbackConfigs.length}] Processing: ${config.name}`);
-    //   const records = await computationService.computeCashbackEligibility(config.id);
-    //   console.log(`       Created ${records} eligibility records`);
+      const records = await computationService.computeCashbackEligibility(config.id);
+      console.log(`       Created ${records} eligibility records`);
       stats.cashback.processed++;
     } catch (error) {
       console.error(`       Failed: ${error.message}`);
@@ -64,8 +64,8 @@ async function main() {
   for (const [index, offer] of exclusiveOffers.entries()) {
     try {
       console.log(`   [${index + 1}/${exclusiveOffers.length}] Processing: ${offer.name}`);
-    //   const records = await computationService.computeExclusiveOfferEligibility(offer.id);
-    //   console.log(`       Created ${records} eligibility records`);
+      const records = await computationService.computeExclusiveOfferEligibility(offer.id);
+      console.log(`       Created ${records} eligibility records`);
       stats.exclusive.processed++;
     } catch (error) {
       console.error(`       Failed: ${error.message}`);
@@ -86,8 +86,8 @@ async function main() {
   for (const [index, program] of loyaltyPrograms.entries()) {
     try {
       console.log(`   [${index + 1}/${loyaltyPrograms.length}] Processing: ${program.name}`);
-    //   const records = await computationService.computeLoyaltyProgramEligibility(program.id);
-    //   console.log(`       Created ${records} eligibility records`);
+      const records = await computationService.computeLoyaltyProgramEligibility(program.id);
+      console.log(`       Created ${records} eligibility records`);
       stats.loyalty.processed++;
     } catch (error) {
       console.error(`       Failed: ${error.message}`);

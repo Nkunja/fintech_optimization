@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../modules/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import {
   CustomerTypeEnum,
   OfferTypeEnum,
@@ -11,7 +11,7 @@ import {
   SPECIAL_CUSTOMER_TYPES,
   getEligibleCustomerTypes,
   BATCH_LIMITS,
-} from '../common/constants';
+} from '../../common/constants';
 
 @Injectable()
 export class EligibilityComputationService {
