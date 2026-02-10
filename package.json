@@ -19,7 +19,11 @@
     "prisma:studio": "prisma studio",
     "prisma:seed": "ts-node prisma/seed.ts",
     "load-users": "ts-node scripts/load-users.ts",
-    "seed-merchants": "ts-node scripts/seed-merchants.ts"
+    "seed-merchants": "ts-node scripts/seed-merchants.ts",
+    "seed-offers": "ts-node scripts/seed-offers.ts",
+    "simulate-transactions": "ts-node scripts/simulate-transactions.ts",
+    "initial-migration": "ts-node scripts/initial.ts",
+    "clear-offer-cache": "ts-node scripts/clear-offer-cache.ts"
   },
   "dependencies": {
     "@apollo/server": "^4.13.0",
@@ -34,6 +38,7 @@
     "bull": "^4.12.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.3",
+    "dotenv": "^17.2.4",
     "graphql": "^16.8.1",
     "ioredis": "^5.3.2",
     "reflect-metadata": "^0.2.1",

@@ -72,6 +72,15 @@ export class OffersService {
       where: eligibilityWhere,
     });
 
+    if (totalCount === 0) {
+      const rawCount = await this.prisma.userOfferEligibility.count({
+        where: { userId, isActive: true },
+      });
+      this.logger.warn(
+        `getOffersForUser: 0 results for userId="${userId}" (raw eligibility count for user: ${rawCount}). Check category/search/percentage filters or validFrom/validUntil.`,
+      );
+    }
+
     // Get distinct outlet IDs with pagination
     const eligibilityRecords = await this.prisma.userOfferEligibility.findMany({
       where: eligibilityWhere,

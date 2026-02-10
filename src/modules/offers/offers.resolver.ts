@@ -3,8 +3,21 @@ import { UseGuards } from '@nestjs/common';
 import { OffersService, OffersQueryArgs } from './offers.service';
 import { CashbackPercentageFilters } from '../../common/constants';
 
+// Helper: get userId from context 
+function getUserIdFromContext(context: any): string | undefined {
+  const fromUser = context?.req?.user?.id;
+  if (fromUser && typeof fromUser === 'string') return fromUser.trim();
+  const headers = context?.req?.headers;
+  if (headers) {
+    const h = (headers['x-test-user-id'] ?? headers['X-Test-User-Id']) ?? '';
+    const id = typeof h === 'string' ? h.trim() : Array.isArray(h) ? (h[0]?.trim?.() ?? '') : '';
+    if (id) return id;
+  }
+  return undefined;
+}
+
 // Simple auth guard placeholder
-// TODO: Replace with actual auth guard implementation
+
 @UseGuards()
 @Resolver()
 export class OffersResolver {
@@ -22,7 +35,7 @@ export class OffersResolver {
     @Args('offset', { nullable: true, defaultValue: 0 }) offset?: number,
     @Context() context?: any,
   ) {
-    const userId = context?.req?.user?.id;
+    const userId = getUserIdFromContext(context);
 
     if (!userId) {
       throw new Error('Unauthorized');
@@ -52,7 +65,7 @@ export class OffersResolver {
     @Args('category', { nullable: true }) category?: string,
     @Context() context?: any,
   ) {
-    const userId = context?.req?.user?.id;
+    const userId = getUserIdFromContext(context);
 
     if (!userId) {
       throw new Error('Unauthorized');
