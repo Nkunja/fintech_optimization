@@ -9,6 +9,19 @@ async function bootstrap() {
     logger: ['log', 'error', 'warn', 'debug', 'verbose'],
   });
 
+ // Impersonate/ Fake auth
+  const allowTestUserHeader =
+    process.env.NODE_ENV !== 'production' || process.env.ENABLE_TEST_USER_HEADER === 'true';
+  if (allowTestUserHeader) {
+    app.use((req: any, _res, next) => {
+      const testUserId = req.headers['x-test-user-id'] ?? req.headers['X-Test-User-Id'];
+      if (testUserId && typeof testUserId === 'string') {
+        req.user = { id: testUserId.trim() };
+      }
+      next();
+    });
+  }
+
   //Enable validation
   app.useGlobalPipes(
     new ValidationPipe({
