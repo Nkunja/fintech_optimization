@@ -2,8 +2,85 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type CreateTestOffersResultType {
+  cashbackId: String!
+  eligibilityRecordsCreated: Int!
+  exclusiveId: String!
+  loyaltyId: String!
+  merchantId: String!
+  merchantName: String!
+  message: String!
+  success: Boolean!
+}
+
+type EligibilityMatrixEntryType {
+  eligibleCount: Int!
+  userId: String!
+}
+
+type EligibilitySummaryType {
+  offers: [EligibleOfferEntryType!]!
+  totalEligible: Int!
+  userId: String!
+}
+
+type EligibleOfferEntryType {
+  hasBudgetRemaining: Boolean!
+  merchantCategory: String
+  merchantName: String!
+  offerId: String!
+  offerType: String!
+  outletName: String!
+}
+
+type MerchantInfoType {
+  businessName: String!
+  category: String!
+  id: String!
+  outletId: String
+}
+
+type Mutation {
+  """
+  Create a test merchant + outlet. Returns merchant id for createTestOffers.
+  """
+  createTestMerchant(
+    """e.g. Retail, Food & Beverage"""
+    category: String!
+
+    """Business name"""
+    name: String!
+  ): MerchantInfoType!
+
+  """
+  Create cashback, exclusive, and loyalty offers for a merchant and make all test users eligible.
+  """
+  createTestOffers(
+    """From merchants query or createTestMerchant"""
+    merchantId: String!
+  ): CreateTestOffersResultType!
+}
+
 type Query {
+  """See all offers a user is eligible for (from UserOfferEligibility)."""
+  eligibilityForUser(
+    """e.g. user-dev-001"""
+    userId: String!
+  ): EligibilitySummaryType!
+
+  """Quick view: each test user and how many offers they are eligible for."""
+  eligibilityMatrix: [EligibilityMatrixEntryType!]!
   health: String!
   loyaltyPrograms(category: String, search: String): String!
+
+  """
+  List merchants (optionally active only). Use merchant id in createTestOffers.
+  """
+  merchants(activeOnly: Boolean = true): [MerchantInfoType!]!
   offers(category: String, limit: Float = 50, offset: Float = 0, percentage: String, search: String): String!
+
+  """
+  List of test user IDs. Use with HTTP header X-Test-User-Id to impersonate.
+  """
+  testUsers: [String!]!
 }
