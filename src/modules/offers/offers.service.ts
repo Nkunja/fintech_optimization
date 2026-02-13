@@ -51,19 +51,19 @@ export class OffersService {
       userId,
       isActive: true,
       hasBudgetRemaining: true,
-      // Check date validity
+    
       validFrom: { lte: now },
       OR: [{ validUntil: null }, { validUntil: { gte: now } }],
-      // Category filter
+      
       ...(category && { merchantCategory: category }),
-      // Search filter (merchant or outlet name)
+    
       ...(search && {
         OR: [
           { merchantName: { contains: search, mode: 'insensitive' } },
           { outletName: { contains: search, mode: 'insensitive' } },
         ],
       }),
-      // Percentage filter (for cashback offers)
+      
       ...(percentage && this.buildPercentageFilter(percentage)),
     };
 

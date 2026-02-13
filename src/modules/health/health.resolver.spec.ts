@@ -15,4 +15,8 @@ describe('HealthResolver', () => {
   it('should be defined', () => {
     expect(resolver).toBeDefined();
   });
+
+  it('should return "ok" from health query', () => {
+    expect(resolver.health()).toBe('ok');
+  });
 });

@@ -11,9 +11,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ============================================================================
-// CORE MODELS (Existing schema with some adjustments for optimization)
-// ============================================================================
+
 
 model Outlet {
   id                      String                    @id @default(cuid())
@@ -106,7 +104,7 @@ model CashbackConfigurationTier {
   createdAt                 DateTime                @default(now())
   updatedAt                 DateTime                @updatedAt
   
-  // Relations
+ 
   CashbackConfiguration     CashbackConfiguration   @relation(fields: [cashbackConfigurationId], references: [id])
   Review                    Review?                 @relation(fields: [reviewId], references: [id])
   
@@ -131,12 +129,11 @@ model ExclusiveOffer {
   createdAt             DateTime                @default(now())
   updatedAt             DateTime                @updatedAt
   
-  // Relations
   Merchant              Merchant?               @relation(fields: [merchantId], references: [id])
   Review                Review?                 @relation(fields: [reviewId], references: [id])
   Outlets               Outlet[]
   
-  // NEW: Track when eligibility was last computed
+
   eligibilityComputedAt DateTime?
   
   @@index([merchantId])
@@ -164,7 +161,7 @@ model LoyaltyProgram {
   LoyaltyTiers            LoyaltyTier[]
   MerchantLoyaltyRewards  MerchantLoyaltyReward[]
   
-  // NEW: Track when eligibility was last computed
+
   eligibilityComputedAt   DateTime?
   
   @@index([merchantId])
@@ -204,7 +201,7 @@ model MerchantLoyaltyReward {
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
   
-  // Relations
+  
   LoyaltyProgram    LoyaltyProgram  @relation(fields: [loyaltyProgramId], references: [id])
   Review            Review?         @relation(fields: [reviewId], references: [id])
   
@@ -221,7 +218,7 @@ model CustomerType {
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
   
-  // Relations
+  
   Merchant    Merchant          @relation(fields: [merchantId], references: [id])
   
   @@unique([userId, merchantId])
@@ -240,7 +237,7 @@ model PaybillOrTill {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   
-  // Relations
+  
   Outlet      Outlet    @relation(fields: [outletId], references: [id])
   Review      Review?   @relation(fields: [reviewId], references: [id])
   
@@ -255,7 +252,7 @@ model Review {
   createdAt                   DateTime                    @default(now())
   updatedAt                   DateTime                    @updatedAt
   
-  // Relations
+  
   Outlet                      Outlet?
   CashbackConfiguration       CashbackConfiguration?
   CashbackConfigurationTier   CashbackConfigurationTier?
@@ -269,9 +266,7 @@ model Review {
   @@map("reviews")
 }
 
-// ============================================================================
-// NEW MODELS (Performance Optimization)
-// ============================================================================
+
 // This pre-computes all the complex eligibility logic
 model UserOfferEligibility {
   id              String          @id @default(cuid())
@@ -281,12 +276,12 @@ model UserOfferEligibility {
   offerId         String
   merchantId      String
   
-  // Eligibility metadata
+ 
   validFrom       DateTime        @default(now())
   validUntil      DateTime?       // Null means indefinite, otherwise expiry date
   isActive        Boolean         @default(true)
   
-  // Denormalized offer data for fast filtering
+ 
   merchantCategory String?
   merchantName    String?
   outletName      String?
@@ -298,15 +293,15 @@ model UserOfferEligibility {
   // Budget tracking snapshot
   hasBudgetRemaining Boolean      @default(true)
   
-  // Timestamps
+
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
   computedAt      DateTime        @default(now())
   
-  // Relations
+  
   Outlet          Outlet          @relation(fields: [outletId], references: [id], onDelete: Cascade)
   
-  // Composite indexes for fast lookups
+ 
   @@unique([userId, outletId, offerType, offerId])
   @@index([userId, isActive, validUntil])
   @@index([userId, offerType, isActive])
@@ -352,7 +347,7 @@ model OfferListCache {
   @@map("offer_list_cache")
 }
 
-// Audit log for debugging and monitoring
+// Audit log 
 model EligibilityComputationLog {
   id                String    @id @default(cuid())
   entityType        String
@@ -367,9 +362,7 @@ model EligibilityComputationLog {
   @@map("eligibility_computation_logs")
 }
 
-// ============================================================================
-// ENUMS
-// ============================================================================
+
 
 enum MerchantStatusEnum {
   Active

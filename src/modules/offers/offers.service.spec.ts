@@ -3,6 +3,15 @@ import { OffersService } from './offers.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { OfferTypeEnum } from '@prisma/client';
 
+jest.mock('../../common/constants', () => ({
+  ...jest.requireActual('../../common/constants'),
+  FEATURE_FLAGS: {
+    USE_MATERIALIZED_ELIGIBILITY: true,
+    ENABLE_QUERY_CACHE: true,
+    ENABLE_BACKGROUND_JOBS: true,
+  },
+}));
+
 describe('OffersService (Integration)', () => {
   let service: OffersService;
   let prisma: PrismaService;

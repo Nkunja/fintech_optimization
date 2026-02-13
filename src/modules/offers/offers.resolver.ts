@@ -16,7 +16,6 @@ function getUserIdFromContext(context: any): string | undefined {
   return undefined;
 }
 
-// Simple auth guard placeholder
 
 @UseGuards()
 @Resolver()
@@ -26,7 +25,7 @@ export class OffersResolver {
   
    //This is the main endpoint that replaces the complex query
    
-  @Query(() => String) // Replace with your actual GraphQL types
+  @Query(() => String) 
   async offers(
     @Args('search', { nullable: true }) search?: string,
     @Args('category', { nullable: true }) category?: string,
@@ -52,7 +51,6 @@ export class OffersResolver {
 
     const result = await this.offersService.getOffersForUser(args);
 
-    // Return the result - adjust based on your GraphQL schema
     return JSON.stringify(result);
   }
 
