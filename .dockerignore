@@ -1,0 +1,33 @@
+# Dependencies and build output
+node_modules
+dist
+npm-debug.log*
+
+# Git and IDE
+.git
+.gitignore
+.idea
+.vscode
+*.md
+
+# Tests and coverage
+coverage
+.nyc_output
+*.spec.ts
+test
+*.test.ts
+
+# Environment and local files
+.env
+.env.*
+!.env.example
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Misc
+.temp
+.tmp
+.DS_Store

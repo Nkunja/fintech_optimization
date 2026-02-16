@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:14-alpine
+    container_name: offers-postgres
+    environment:
+      POSTGRES_USER: offers_user
+      POSTGRES_PASSWORD: offers_password
+      POSTGRES_DB: offers_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U offers_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: offers-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: offers-api
+    environment:
+      DATABASE_URL: postgresql://offers_user:offers_password@postgres:5432/offers_db
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      PORT: 5050
+      USE_MATERIALIZED_ELIGIBILITY: "true"
+      ENABLE_QUERY_CACHE: "true"
+      ENABLE_BACKGROUND_JOBS: "true"
+    ports:
+      - "5050:5050"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src
+      - ./prisma:/app/prisma
+    command: npm run start:dev
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: offers-worker
+    environment:
+      DATABASE_URL: postgresql://offers_user:offers_password@postgres:5432/offers_db
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      ENABLE_BACKGROUND_JOBS: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src
+      - ./prisma:/app/prisma
+    command: npm run start:dev
+
+volumes:
+  postgres_data:
+  redis_data:

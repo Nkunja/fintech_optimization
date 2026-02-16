@@ -1,0 +1,75 @@
+# Production compose: use with image from GHCR.
+# On server: set DEPLOY_PATH and env (e.g. .env) with DATABASE_URL, REDIS_HOST, etc.
+# Image is set by deploy script or env: FINTECH_IMAGE=ghcr.io/OWNER/fintech:latest
+
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:14-alpine
+    container_name: fintech-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-offers_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
+      POSTGRES_DB: ${POSTGRES_DB:-offers_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-offers_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: fintech-redis
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  api:
+    image: ${FINTECH_IMAGE:?FINTECH_IMAGE required}
+    container_name: fintech-api
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      PORT: 5050
+      NODE_ENV: production
+      USE_MATERIALIZED_ELIGIBILITY: ${USE_MATERIALIZED_ELIGIBILITY:-true}
+      ENABLE_QUERY_CACHE: ${ENABLE_QUERY_CACHE:-true}
+      ENABLE_BACKGROUND_JOBS: ${ENABLE_BACKGROUND_JOBS:-true}
+    ports:
+      - "${API_PORT:-5050}:5050"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker:
+    image: ${FINTECH_IMAGE:?FINTECH_IMAGE required}
+    container_name: fintech-worker
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      NODE_ENV: production
+      ENABLE_BACKGROUND_JOBS: ${ENABLE_BACKGROUND_JOBS:-true}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:

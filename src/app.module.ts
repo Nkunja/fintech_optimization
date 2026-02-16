@@ -5,7 +5,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { BullModule } from '@nestjs/bull';
 import { join } from 'path';
 import { PrismaModule } from './modules/prisma/prisma.module';
-import { HealthResolver } from './modules/health/health.resolver';
+import { HealthModule } from './modules/health/health.module';
 import { OffersModule } from './modules/offers/offers.module';
 import { EligibilityModule } from './modules/eligibility/eligibility.module';
 
@@ -34,9 +34,9 @@ import { EligibilityModule } from './modules/eligibility/eligibility.module';
 
     
     PrismaModule,
+    HealthModule,
     OffersModule,
     EligibilityModule,
   ],
-  providers: [HealthResolver],
 })
 export class AppModule {}
