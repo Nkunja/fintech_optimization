@@ -5,7 +5,7 @@ This project uses GitHub Actions to build a Docker image, push it to GitHub Cont
 ## Pipeline overview
 
 1. **Build** (on every push to `main`/`master`): Builds the app with Docker, pushes image to `ghcr.io/<owner>/<repo>:latest` and `ghcr.io/<owner>/<repo>:<sha>`.
-2. **Deploy** (if server secrets are set): SSHs to the server, pulls the new image, and runs `docker compose -f docker-compose.prod.yml up -d api worker`.
+2. **Deploy** (if variable `DEPLOY_ENABLED` is `true`): SSHs to the server, pulls the new image, and runs `docker compose -f docker-compose.prod.yml up -d api worker`.
 
 ## Local Docker (development)
 
@@ -23,7 +23,10 @@ docker compose up -d
 
 ### Required for deploy (optional)
 
-Add these repository secrets in **Settings → Secrets and variables → Actions**:
+1. **Variable**: In **Settings → Secrets and variables → Actions → Variables**, add:
+   - `DEPLOY_ENABLED` = `true` (so the deploy job runs).
+
+2. **Secrets**: In **Settings → Secrets and variables → Actions → Secrets**, add:
 
 | Secret        | Description |
 |---------------|-------------|
@@ -34,7 +37,7 @@ Add these repository secrets in **Settings → Secrets and variables → Actions
 | `DEPLOY_PATH` | (Optional) Path on server where repo or compose lives, default `/home/deploy/fintech` |
 | `GHCR_PAT`    | (Optional) GitHub PAT with `read:packages` so the server can pull the image. Required if the GHCR package is private. |
 
-If `SERVER_HOST` is not set, the workflow only builds and pushes the image (no deploy step).
+If `DEPLOY_ENABLED` is not set or not `true`, the workflow only builds and pushes the image (deploy job is skipped).
 
 ## Server setup (first time)
 
