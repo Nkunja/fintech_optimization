@@ -1,0 +1,126 @@
+name: Build and Deploy (Docker + GHCR)
+
+on:
+  push:
+    branches:
+      - deploy
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.meta.outputs.tags }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata and set image
+        id: meta
+        run: |
+          REPO="${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ github.event.repository.name }}"
+          REPO=$(echo "$REPO" | tr '[:upper:]' '[:lower:]')
+          echo "tags=${REPO}:latest,${REPO}:${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          echo "image=${REPO}:latest" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: vars.DEPLOY_ENABLED == 'true'
+    steps:
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          script: |
+            set -e
+            set -o pipefail
+            
+            error_exit() {
+              echo "ERROR: $1" >&2
+              exit 1
+            }
+            
+            DEPLOY_PATH="${{ secrets.DEPLOY_PATH || '/home/deploy/fintech' }}"
+            IMAGE="${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest"
+            IMAGE=$(echo "$IMAGE" | tr '[:upper:]' '[:lower:]')
+            
+            cd "$DEPLOY_PATH" || error_exit "Failed to change to deployment directory: $DEPLOY_PATH"
+            
+            if [ -d .git ]; then
+              echo "Pulling latest repo (for docker-compose.prod.yml)..."
+              git fetch origin || true
+              git reset --hard origin/main 2>/dev/null || git reset --hard origin/master 2>/dev/null || true
+            fi
+            
+            if [ -n "${{ secrets.GHCR_PAT }}" ]; then
+              echo "Logging in to GHCR..."
+              echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+            fi
+            
+            export FINTECH_IMAGE="$IMAGE"
+            echo "Pulling image: $FINTECH_IMAGE"
+            docker compose -f docker-compose.prod.yml pull api worker || error_exit "Failed to pull images"
+            
+            echo "Starting services..."
+            docker compose -f docker-compose.prod.yml up -d api worker || error_exit "Failed to start services"
+            
+            echo "Cleaning up old images..."
+            docker image prune -f || true
+
+      - name: Health check
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          script: |
+            DEPLOY_PATH="${{ secrets.DEPLOY_PATH || '/home/deploy/fintech' }}"
+            API_PORT="${API_PORT:-3000}"
+            cd "$DEPLOY_PATH"
+            
+            echo "Waiting for application to start..."
+            sleep 15
+            
+            echo "Checking container status..."
+            docker compose -f docker-compose.prod.yml ps || true
+            
+            echo ""
+            echo "Performing health check..."
+            if curl -sf "http://localhost:${API_PORT}/health" > /dev/null; then
+              echo "✓ Health check passed! Application is responding on /health"
+            else
+              echo "✗ Health check failed! Application is not responding on /health"
+              echo ""
+              docker compose -f docker-compose.prod.yml logs api --tail 50 || true
+              exit 1
+            fi
